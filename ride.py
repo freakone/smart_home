@@ -4,7 +4,7 @@ import paho.mqtt.client as mqtt
 import time
 from maps import *
 from threading import Thread
-import os
+import sys
 
 bus = smbus.SMBus(1)
 
@@ -26,7 +26,7 @@ def read_action(gpio):
                 result = switches[gpio][i]
                 print gpio, i, "mapped output =>", result
                 output_states[result['port']] ^= (1 << result['pin'])
-                out.append(result['pin'])
+                out.append(result)
             else:
                 print "! unknown key", gpio, i
     input_states[gpio] = read
@@ -37,6 +37,8 @@ output_states[GPIOA] = bus.read_byte_data(OUTPUT, GPIOA)
 output_states[GPIOB] = bus.read_byte_data(OUTPUT, GPIOB)
 input_states[GPIOA] = bus.read_byte_data(INPUT, GPIOA)
 input_states[GPIOB] = bus.read_byte_data(INPUT, GPIOB)
+input_states[SPECIAL_FUNCTIONS] = 0
+output_states[SPECIAL_FUNCTIONS] = 0
 
 def on_connect(client, userdata, flags, rc):
     print("Connected to mqtt with result code "+str(rc))
@@ -64,8 +66,8 @@ def on_message(client, userdata, msg):
 client = mqtt.Client("smart-home-python-script")
 client.on_connect = on_connect
 client.on_message = on_message
-client.username_pw_set(os.environ['SH-MQTT-LOGIN'], os.environ['SH-MQTT-PASSWORD'])
-client.connect(os.environ['SH-MQTT-SERVER'], 19470)
+client.username_pw_set(sys.argv[2], sys.argv[3])
+client.connect(sys.argv[1], 19470)
 
 thread = Thread(target = client.loop_forever)
 thread.daemon = True
@@ -74,16 +76,9 @@ thread.start()
 while True:
     diffa = read_action(GPIOA)
     diffb = read_action(GPIOB)
-    diff_special = read_action(SPECIAL_FUNCTIONS)
 
-    for ind in diffa:
-        client.publish("home/lights/{}/{}/state".format(GPIOA, ind), "ON" if output_states[GPIOA] & (1 << ind) else "OFF", retain=True)
-
-    for ind in diffa:
-        client.publish("home/lights/{}/{}/state".format(GPIOB, ind), "ON" if output_states[GPIOB] & (1 << ind) else "OFF", retain=True)
-
-    for ind in diff_special:
-        client.publish("home/lights/special_functions/{}/switch".format(ind), retain=True)
+    for ind in diffa + diffb:
+        client.publish("home/lights/{}/{}/state".format(ind['port'], ind['pin']), "ON" if output_states[ind['port']] & (1 << ind['pin']) else "OFF", retain=True)
 
     if diffa or diffb:
         bus.write_byte_data(OUTPUT, GPIOA, output_states[GPIOA])
