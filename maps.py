@@ -7,6 +7,7 @@ DIRA = 0x00
 DIRB = 0x01
 GPIOA = 0x12
 GPIOB = 0x13
+SPECIAL_FUNCTIONS = 0x00
 
 switches = {
     GPIOA: {
@@ -19,8 +20,8 @@ switches = {
             'pin': 4
         },
         0x02: { #wejscie 
-            'port': GPIOA,
-            'pin': 6
+            'port': SPECIAL_FUNCTIONS,
+            'pin': 0
         },
         0x03: { #wejscie 2 
             'port': GPIOA,

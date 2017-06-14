@@ -74,14 +74,16 @@ thread.start()
 while True:
     diffa = read_action(GPIOA)
     diffb = read_action(GPIOB)
+    diff_special = read_action(SPECIAL_FUNCTIONS)
 
-    if len(diffa) > 0:
-        for ind in diffa:
-            client.publish("home/lights/{}/{}/state".format(GPIOA, ind), "ON" if output_states[GPIOA] & (1 << ind) else "OFF", retain=True)
+    for ind in diffa:
+        client.publish("home/lights/{}/{}/state".format(GPIOA, ind), "ON" if output_states[GPIOA] & (1 << ind) else "OFF", retain=True)
 
-    if len(diffb) > 0:
-        for ind in diffa:
-            client.publish("home/lights/{}/{}/state".format(GPIOB, ind), "ON" if output_states[GPIOB] & (1 << ind) else "OFF", retain=True)
+    for ind in diffa:
+        client.publish("home/lights/{}/{}/state".format(GPIOB, ind), "ON" if output_states[GPIOB] & (1 << ind) else "OFF", retain=True)
+
+    for ind in diff_special:
+        client.publish("home/lights/special_functions/{}/switch".format(ind), retain=True)
 
     if diffa or diffb:
         bus.write_byte_data(OUTPUT, GPIOA, output_states[GPIOA])
