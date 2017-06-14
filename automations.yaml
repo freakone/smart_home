@@ -1,0 +1,23 @@
+- alias: Turn off all lights on main door switch
+  trigger:
+    platform: state
+    entity_id: binary_sensor.master_switch
+  condition:
+    condition: state
+    entity_id: group.all_lights
+    state: 'on'
+  action:
+    service: homeassistant.turn_off
+    entity_id: group.all_lights
+
+- alias: Turn on entry light on main door switch
+  trigger:
+    platform: state
+    entity_id: binary_sensor.master_switch
+  condition:
+    condition: state
+    entity_id: group.all_lights
+    state: 'off'
+  action:
+    service: homeassistant.turn_on
+    entity_id: light.wejscie
